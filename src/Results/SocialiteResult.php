@@ -22,4 +22,4 @@ class SocialiteResult
     {
         return new self('error', $message, null, $context);
     }
-} 
+}

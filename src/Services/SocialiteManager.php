@@ -51,13 +51,14 @@ class SocialiteManager implements SocialiteService
     {
         if ($socialAccount && $socialAccount->user_id !== auth()->id()) {
             return SocialiteResult::error('socialite-unify::socialite.bind.already_bound', [
-                'provider' => $provider
+                'provider' => __("socialite-unify::socialite.providers.{$provider}"),
             ]);
         }
 
         $this->bindSocialAccount(auth()->user(), $provider, $socialUser);
+
         return SocialiteResult::success('socialite-unify::socialite.bind.success', auth()->user(), [
-            'provider' => $provider
+            'provider' => __("socialite-unify::socialite.providers.{$provider}"),
         ]);
     }
 
@@ -65,6 +66,7 @@ class SocialiteManager implements SocialiteService
     {
         if ($socialAccount) {
             $user = User::find($socialAccount->user_id);
+
             return SocialiteResult::success('socialite-unify::socialite.login.success', $user);
         }
 

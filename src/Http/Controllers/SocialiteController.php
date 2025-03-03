@@ -27,13 +27,18 @@ class SocialiteController extends Controller
     {
         $result = $this->socialiteService->handleProviderCallback($provider);
 
+        if (auth()->check()) {
+            return redirect()->route('profile.show')
+                ->with($result->status, __($result->message, $result->context));
+        }
+
         if ($result->status === 'success' && $result->user) {
             Auth::login($result->user);
+
             return redirect()->intended('/dashboard');
         }
 
-        $route = auth()->check() ? 'profile.show' : 'login';
-        return redirect()->route($route)
+        return redirect()->route('login')
             ->with($result->status, __($result->message, $result->context));
     }
 }
