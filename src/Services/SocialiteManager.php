@@ -5,6 +5,7 @@ namespace Bleuren\SocialiteUnify\Services;
 use App\Models\User;
 use Bleuren\SocialiteUnify\Contracts\SocialiteService;
 use Bleuren\SocialiteUnify\Models\SocialAccount;
+use Bleuren\SocialiteUnify\Results\SocialiteResult;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -30,48 +31,62 @@ class SocialiteManager implements SocialiteService
         return Socialite::driver($provider)->redirect();
     }
 
-    public function handleProviderCallback(string $provider): mixed
+    public function handleProviderCallback(string $provider): SocialiteResult
     {
-        $socialUser = Socialite::driver($provider)->user();
-        $socialAccount = $this->findSocialAccount($provider, $socialUser->getId());
+        try {
+            $socialUser = Socialite::driver($provider)->user();
+            $socialAccount = $this->findSocialAccount($provider, $socialUser->getId());
 
-        if (auth()->check()) {
-            if ($socialAccount && $socialAccount->user_id !== auth()->id()) {
-                throw new Exception(__('socialite-unify::socialite.bind.already_bound', [
-                    'provider' => __("socialite-unify::socialite.providers.{$provider}"),
-                ]));
+            if (auth()->check()) {
+                return $this->handleExistingUserCallback($provider, $socialUser, $socialAccount);
             }
 
-            $this->bindSocialAccount(auth()->user(), $provider, $socialUser);
-            throw new Exception(__('socialite-unify::socialite.bind.success', [
-                'provider' => __("socialite-unify::socialite.providers.{$provider}"),
-            ]));
+            return $this->handleNewUserCallback($provider, $socialUser, $socialAccount);
+        } catch (Exception $e) {
+            return SocialiteResult::error('socialite-unify::socialite.errors.login_failed');
+        }
+    }
+
+    protected function handleExistingUserCallback(string $provider, SocialiteUser $socialUser, ?SocialAccount $socialAccount): SocialiteResult
+    {
+        if ($socialAccount && $socialAccount->user_id !== auth()->id()) {
+            return SocialiteResult::error('socialite-unify::socialite.bind.already_bound', [
+                'provider' => $provider
+            ]);
         }
 
+        $this->bindSocialAccount(auth()->user(), $provider, $socialUser);
+        return SocialiteResult::success('socialite-unify::socialite.bind.success', auth()->user(), [
+            'provider' => $provider
+        ]);
+    }
+
+    protected function handleNewUserCallback(string $provider, SocialiteUser $socialUser, ?SocialAccount $socialAccount): SocialiteResult
+    {
         if ($socialAccount) {
-            return User::find($socialAccount->user_id);
+            $user = User::find($socialAccount->user_id);
+            return SocialiteResult::success('socialite-unify::socialite.login.success', $user);
         }
 
-        return DB::transaction(function () use ($provider, $socialUser) {
+        $user = DB::transaction(function () use ($provider, $socialUser) {
             $email = $socialUser->getEmail() ?? "{$socialUser->getId()}@{$provider}.me";
-            $user = User::where('email', $email)->first();
-
-            if (! $user) {
-                $user = User::create([
+            $user = User::firstOrCreate(
+                ['email' => $email],
+                [
                     'name' => $socialUser->getName() ?? $socialUser->getNickname(),
-                    'email' => $email,
                     'password' => Hash::make(Str::random(16)),
                     'has_password' => false,
                     'email_verified_at' => now(),
-                ]);
-
-                $this->createTeam($user);
-            }
+                ]
+            );
 
             $this->bindSocialAccount($user, $provider, $socialUser);
+            $this->createTeam($user);
 
             return $user;
         });
+
+        return SocialiteResult::success('socialite-unify::socialite.register.success', $user);
     }
 
     public function bindSocialAccount(User $user, string $provider, SocialiteUser $socialiteUser): bool
