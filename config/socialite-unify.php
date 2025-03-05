@@ -30,8 +30,8 @@ return [
     |--------------------------------------------------------------------------
     |
     | 此配置定義了路由名稱的前綴。
-    | 預設為 'auth'，生成的路由名稱將是 'auth.redirect' 和 'auth.callback'。
+    | 預設為 'socialite'，生成的路由名稱將是 'socialite.redirect' 和 'socialite.callback'。
     |
     */
-    'route_name_prefix' => 'auth',
+    'route_name_prefix' => 'socialite',
 ]; 

@@ -75,7 +75,7 @@ class SocialiteServiceProvider extends ServiceProvider
     protected function loadRoutes()
     {
         $routePrefix = config('socialite-unify.route_prefix', 'auth');
-        $routeNamePrefix = config('socialite-unify.route_name_prefix', 'auth');
+        $routeNamePrefix = config('socialite-unify.route_name_prefix', 'socialite');
 
         Route::middleware('web')
             ->prefix($routePrefix)
