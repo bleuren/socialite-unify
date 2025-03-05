@@ -8,7 +8,11 @@ trait HasSocialiteUnify
 {
     public function initializeHasSocialiteUnify()
     {
-        $this->fillable[] = 'has_password';
+        $this->fillable = array_merge($this->fillable ?? [], [
+            'has_password',
+            'email_verified_at'
+        ]);
+
         $this->mergeCasts(['has_password' => 'boolean']);
     }
 
