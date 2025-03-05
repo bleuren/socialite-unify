@@ -199,11 +199,57 @@ Schema::table('users', function (Blueprint $table) {
 
 ### Adding New Providers
 
-By default, the package supports LINE. To add additional social platforms, follow these steps:
+By default, the package supports LINE. To add additional social platforms, you have two options:
 
-1. Install and configure the desired provider by following the instructions at [Socialite Providers](https://socialiteproviders.com/). For example, see [Facebook Provider Installation](https://socialiteproviders.com/Facebook/).
+#### Option 1: Using Configuration (Recommended)
 
-2. Create a new Provider class to extend SocialiteManager:
+1. Install the desired provider by following the instructions at [Socialite Providers](https://socialiteproviders.com/). For example, for Facebook:
+
+```bash
+composer require socialiteproviders/facebook
+```
+
+2. Add the provider to your `config/socialite-unify.php`:
+
+```php
+'providers' => ['line', 'facebook'],
+```
+
+3. Register the provider's event listener in your `EventServiceProvider.php`:
+
+```php
+protected $listen = [
+    \SocialiteProviders\Manager\SocialiteWasCalled::class => [
+        // ... existing listeners
+        \SocialiteProviders\Facebook\FacebookExtendSocialite::class,
+    ],
+];
+```
+
+4. Add the provider's credentials to your `.env` file and `config/services.php`.
+
+5. Add the provider's translation to your language files. You have two options:
+
+   **Option A: Publish all translation files** (recommended for first-time setup):
+   ```bash
+   php artisan vendor:publish --provider="Bleuren\SocialiteUnify\Providers\SocialiteServiceProvider" --tag=translations
+   ```
+   Then edit the published files to add your new provider.
+
+   **Option B: Manually add translations** (recommended when adding new providers):
+   ```php
+   // lang/vendor/socialite-unify/[locale]/socialite.php
+   return [
+       'providers' => [
+           'line' => 'LINE',
+           'facebook' => 'Facebook'
+       ],
+   ];
+   ```
+
+#### Option 2: Extending SocialiteManager (Legacy)
+
+If you need more customization, you can extend the SocialiteManager class:
 
 ```php
 namespace App\Services;
@@ -217,7 +263,7 @@ class CustomSocialiteManager extends SocialiteManager
 }
 ```
 
-3. Register your CustomSocialiteManager in `AppServiceProvider`:
+Then register your CustomSocialiteManager in `AppServiceProvider`:
 
 ```php
 use Bleuren\SocialiteUnify\Contracts\SocialiteService;
@@ -227,24 +273,6 @@ public function register(): void
 {
     $this->app->singleton(SocialiteService::class, CustomSocialiteManager::class);
 }
-```
-
-4. Publish the translations:
-
-```bash
-php artisan vendor:publish --provider="Bleuren\SocialiteUnify\Providers\SocialiteServiceProvider" --tag=translations
-```
-
-5. Add the provider's translation to your language files:
-
-```php
-// lang/vendor/socialite-unify/[locale]/socialite.php
-return [
-    'providers' => [
-        'line' => 'LINE',
-        'facebook' => 'Facebook'
-    ],
-];
 ```
 
 ### Views

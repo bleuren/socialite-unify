@@ -15,6 +15,8 @@ return new class extends Migration
             $table->string('provider_id');
             $table->timestamps();
             $table->unique(['provider_name', 'provider_id']);
+            $table->index('provider_name');
+            $table->index('user_id');
         });
     }
 

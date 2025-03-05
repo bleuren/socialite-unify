@@ -18,11 +18,20 @@ class SocialiteServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        $this->mergeConfigFrom(
+            __DIR__.'/../../config/socialite-unify.php', 'socialite-unify'
+        );
+
         $this->app->singleton(SocialiteService::class, SocialiteManager::class);
     }
 
     public function boot(): void
     {
+        // 發布 config
+        $this->publishes([
+            __DIR__.'/../../config/socialite-unify.php' => config_path('socialite-unify.php'),
+        ], 'config');
+
         // 發布 migrations
         $this->publishes([
             __DIR__.'/../../database/migrations' => database_path('migrations'),
@@ -65,10 +74,14 @@ class SocialiteServiceProvider extends ServiceProvider
 
     protected function loadRoutes()
     {
+        $routePrefix = config('socialite-unify.route_prefix', 'auth');
+        $routeNamePrefix = config('socialite-unify.route_name_prefix', 'auth');
+
         Route::middleware('web')
-            ->group(function () {
-                Route::get('auth/{provider}', [SocialiteController::class, 'redirect'])->name('socialite.redirect');
-                Route::get('auth/{provider}/callback', [SocialiteController::class, 'callback'])->name('socialite.callback');
+            ->prefix($routePrefix)
+            ->group(function () use ($routeNamePrefix) {
+                Route::get('{provider}', [SocialiteController::class, 'redirect'])->name("$routeNamePrefix.redirect");
+                Route::get('{provider}/callback', [SocialiteController::class, 'callback'])->name("$routeNamePrefix.callback");
             });
     }
 }

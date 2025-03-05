@@ -15,7 +15,12 @@ use Laravel\Socialite\Facades\Socialite;
 
 class SocialiteManager implements SocialiteService
 {
-    protected array $providers = ['line'];
+    protected array $providers;
+
+    public function __construct()
+    {
+        $this->providers = config('socialite-unify.providers', ['line']);
+    }
 
     public function getSupportedProviders(): array
     {
