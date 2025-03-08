@@ -209,26 +209,29 @@ By default, the package supports LINE. To add additional social platforms, you h
 composer require socialiteproviders/facebook
 ```
 
-2. Add the provider to your `config/socialite-unify.php`:
+2. If you haven't published the configuration file yet, publish it first:
+
+```bash
+php artisan vendor:publish --provider="Bleuren\SocialiteUnify\Providers\SocialiteServiceProvider" --tag=config
+```
+
+3. Add the provider to your `config/socialite-unify.php`:
 
 ```php
 'providers' => ['line', 'facebook'],
 ```
 
-3. Register the provider's event listener in your `EventServiceProvider.php`:
+4. Register the provider's event listener in your `AppServiceProvider.php` boot method:
 
 ```php
-protected $listen = [
-    \SocialiteProviders\Manager\SocialiteWasCalled::class => [
-        // ... existing listeners
-        \SocialiteProviders\Facebook\FacebookExtendSocialite::class,
-    ],
-];
+Event::listen(function (\SocialiteProviders\Manager\SocialiteWasCalled $event) {
+    $event->extendSocialite('facebook', \SocialiteProviders\Facebook\Provider::class);
+});
 ```
 
-4. Add the provider's credentials to your `.env` file and `config/services.php`.
+5. Add the provider's credentials to your `.env` file and `config/services.php`.
 
-5. Add the provider's translation to your language files. You have two options:
+6. Add the provider's translation to your language files. You have two options:
 
    **Option A: Publish all translation files** (recommended for first-time setup):
    ```bash
