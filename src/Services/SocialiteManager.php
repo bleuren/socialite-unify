@@ -7,6 +7,7 @@ use Bleuren\SocialiteUnify\Contracts\SocialiteService;
 use Bleuren\SocialiteUnify\Models\SocialAccount;
 use Bleuren\SocialiteUnify\Results\SocialiteResult;
 use Exception;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -93,7 +94,50 @@ class SocialiteManager implements SocialiteService
             return $user;
         });
 
+        if ($socialUser->getAvatar()) {
+            $this->uploadProfilePhotoFromUrl($user, $socialUser->getAvatar());
+        }
+
         return SocialiteResult::success('socialite-unify::socialite.register.success', $user);
+    }
+
+    protected function uploadProfilePhotoFromUrl(User $user, string $url): void
+    {
+        try {
+            $tempFile = tempnam(sys_get_temp_dir(), 'avatar_');
+            $contents = @file_get_contents($url);
+
+            if (! $contents) {
+                return;
+            }
+
+            file_put_contents($tempFile, $contents);
+
+            $fileName = basename(parse_url($url, PHP_URL_PATH)) ?: 'avatar.jpg';
+            $mimeType = mime_content_type($tempFile) ?: 'image/jpeg';
+
+            if (! str_starts_with($mimeType, 'image/')) {
+                @unlink($tempFile);
+
+                return;
+            }
+
+            $uploadedFile = new UploadedFile(
+                $tempFile,
+                $fileName,
+                $mimeType,
+                null,
+                true
+            );
+
+            $user->updateProfilePhoto($uploadedFile);
+
+            @unlink($tempFile);
+        } catch (Exception $e) {
+            throw new Exception(__('socialite-unify::socialite.errors.avatar_upload_failed', [
+                'message' => $e->getMessage(),
+            ]));
+        }
     }
 
     public function bindSocialAccount(User $user, string $provider, SocialiteUser $socialiteUser): bool

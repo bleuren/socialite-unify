@@ -34,4 +34,4 @@ return [
     |
     */
     'route_name_prefix' => 'socialite',
-]; 
+];

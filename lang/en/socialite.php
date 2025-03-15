@@ -23,6 +23,7 @@ return [
         'login_failed' => 'Social login failed, please try again later',
         'last_account' => 'Cannot unbind the last social account. Please set a password or bind another account first',
         'unbind_failed' => 'Failed to unbind account, please try again later',
+        'avatar_upload_failed' => 'Failed to upload avatar, please try again later',
     ],
     'providers' => [
         'line' => 'LINE',

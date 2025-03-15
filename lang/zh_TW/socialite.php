@@ -23,6 +23,7 @@ return [
         'login_failed' => '社交登入失敗，請稍後再試',
         'last_account' => '無法解除綁定最後一個社交帳號，請先設置密碼或綁定其他帳號',
         'unbind_failed' => '解除綁定失敗，請稍後再試',
+        'avatar_upload_failed' => '頭像上傳失敗，請稍後再試',
     ],
     'providers' => [
         'line' => 'LINE',
